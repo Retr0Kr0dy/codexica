@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Project C</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1622;
+      --panel2:#111b2a;
+      --text:#e7eefc;
+      --muted:#94a3b8;
+      --border:rgba(255,255,255,.10);
+      --accent:#7c3aed; /* purple-ish */
+      --accent2:#22c55e; /* green-ish */
+      --shadow: 0 10px 30px rgba(0,0,0,.45);
+      --radius: 16px;
+      --radius2: 12px;
+    }
+
+    *{ box-sizing:border-box; }
+    html, body { height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(124,58,237,.18), transparent 60%),
+                  radial-gradient(900px 500px at 90% 20%, rgba(34,197,94,.12), transparent 60%),
+                  var(--bg);
+      color: var(--text);
+      overflow:hidden; /* IMPORTANT: no page scrolling, only central panel */
+    }
+
+    header{
+      height:72px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 0 22px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(11,15,20,.7);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top:0;
+      z-index:10;
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      letter-spacing:.3px;
+    }
+    .logo{
+      width:38px; height:38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(124,58,237,.9), rgba(34,197,94,.75));
+      box-shadow: var(--shadow);
+    }
+    .title{
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .subtitle{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top:2px;
+    }
+
+    main{
+      height: calc(100vh - 72px);
+      padding: 18px;
+      display:flex;
+      justify-content:center;
+    }
+
+    .card{
+      width: min(1100px, 100%);
+      height: 100%;
+      background: linear-gradient(180deg, rgba(17,27,42,.72), rgba(15,22,34,.72));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+
+      display:flex;
+      flex-direction:column;
+    }
+
+    .toolbar{
+      padding: 14px 14px 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15,22,34,.55);
+      backdrop-filter: blur(10px);
+    }
+
+    .searchRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
+    .pathInput{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+    .pathInput .icon{
+      color: var(--muted);
+      font-size: 14px;
+      user-select:none;
+    }
+    input[type="text"]{
+      width:100%;
+      border:0;
+      outline:none;
+      background: transparent;
+      color: var(--text);
+      font-size: 14px;
+    }
+    input::placeholder{ color: rgba(148,163,184,.7); }
+
+    .pill{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+      user-select:none;
+      white-space:nowrap;
+    }
+
+    .viewportWrap{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      min-height:0; /* allow inner scrolling */
+    }
+
+    .breadcrumb{
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background: rgba(15,22,34,.40);
+    }
+    .crumbs{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      align-items:center;
+    }
+    .crumbBtn{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      padding: 4px 8px;
+      border-radius: 10px;
+      cursor:pointer;
+      font-size: 12px;
+    }
+    .crumbBtn:hover{ border-color: rgba(124,58,237,.6); }
+
+    .viewport{
+      flex:1;
+      overflow:auto; /* ONLY scroll here */
+      padding: 14px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 12px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.03);
+    }
+
+    .left{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .badge{
+      width:34px; height:34px;
+      border-radius: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 800;
+      background: rgba(124,58,237,.18);
+      border: 1px solid rgba(124,58,237,.35);
+      color: rgba(231,238,252,.95);
+      user-select:none;
+    }
+    .badge.file{
+      background: rgba(34,197,94,.14);
+      border: 1px solid rgba(34,197,94,.32);
+    }
+
+    .nameCol{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+    }
+    .name{
+      font-size: 14px;
+      font-weight: 650;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .meta{
+      font-size: 12px;
+      color: var(--muted);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-shrink:0;
+    }
+
+    button{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size: 13px;
+    }
+    button:hover{ border-color: rgba(124,58,237,.6); }
+    .primary{
+      border-color: rgba(34,197,94,.45);
+      background: rgba(34,197,94,.10);
+    }
+    .primary:hover{ border-color: rgba(34,197,94,.75); }
+
+    .hint{
+      padding: 10px 14px 14px 14px;
+      color: var(--muted);
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+      background: rgba(15,22,34,.40);
+			display:flex;
+			justify-content:center;
+    }
+
+		.footerPill{
+		  font-size: 12px;
+		  padding: 6px 10px;
+		  color: var(--muted);
+		  user-select: none;
+		  white-space: nowrap;
+		}
+
+		.logoImg{
+		  width:38px;
+		  height:38px;
+		  border-radius: 12px;
+		  object-fit: cover;
+		  box-shadow: var(--shadow);
+		  border: 1px solid var(--border);
+		  user-select:none;
+		  -webkit-user-drag: none;
+		}
+
+		.brandText{
+		  display:flex;
+		  flex-direction:column;
+		  line-height: 1.1;
+		  user-select: none;
+		}
+
+		.title, .subtitle{
+		  user-select: none;
+		}
+
+    .empty, .loading, .error{
+      padding: 18px;
+      border: 1px dashed rgba(255,255,255,.18);
+      border-radius: var(--radius2);
+      color: var(--muted);
+      background: rgba(255,255,255,.02);
+    }
+
+    /* nice scrollbar (webkit) */
+    .viewport::-webkit-scrollbar { width: 10px; }
+    .viewport::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,.12);
+      border-radius: 999px;
+      border: 2px solid rgba(0,0,0,0);
+      background-clip: padding-box;
+    }
+    .viewport::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.18); background-clip: padding-box; }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="brand">
+		<div id="logoBox" class="logo" aria-hidden="true"></div>
+		<img id="logoImg" class="logoImg" style="display:none" alt="Logo">
+
+	  <div class="brandText" id="brandText">
+			<div class="title" id="brandTitle">Codexica</div>
+			<div class="subtitle" id="brandSubtitle">Browse dataset gracefully</div>
+		</div>
+	</div>
+  <div class="pill" id="statsPill">Loading…</div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="toolbar">
+      <div class="searchRow">
+        <div class="pathInput">
+          <span class="icon">📁</span>
+          <input id="pathInput" type="text" placeholder="/" value="/" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="pill" id="cwdPill">/</div>
+      </div>
+    </div>
+
+    <div class="viewportWrap">
+      <div class="breadcrumb">
+        <span>Path:</span>
+        <div class="crumbs" id="crumbs"></div>
+      </div>
+
+      <div class="viewport" id="viewport">
+        <div class="loading">Loading manifest…</div>
+      </div>
+    </div>
+
+    <div class="hint">
+<span class="footerPill">Powered with <3 by Codexica</span>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const MANIFEST_URL = "/manifest.json";
+  const DOWNLOADER_URL = "/downloader.php?q=";
+
+	const BRAND = {
+	  title: "Codexica",
+	  subtitle: "Browse dataset gracefully",
+	  logoUrl: ""
+	};
+
+  const elViewport = document.getElementById("viewport");
+  const elPathInput = document.getElementById("pathInput");
+  const elCwdPill = document.getElementById("cwdPill");
+  const elStatsPill = document.getElementById("statsPill");
+  const elCrumbs = document.getElementById("crumbs");
+
+	document.getElementById("brandTitle").textContent = BRAND.title;
+	document.getElementById("brandSubtitle").textContent = BRAND.subtitle;
+
+	if (BRAND.logoUrl) {
+	  const img = document.getElementById("logoImg");
+	  img.src = BRAND.logoUrl;
+	  img.style.display = "";
+	  document.getElementById("logoBox").style.display = "none";
+	}
+
+  // In-memory structure:
+  // tree[dirPath] = { dirs: Set(childDirName), files: Array(fileEntry) }
+  // where dirPath is "" for root, otherwise "A/B"
+  const tree = new Map();
+  let manifestStats = null;
+
+  function ensureNode(dir) {
+    if (!tree.has(dir)) tree.set(dir, { dirs: new Set(), files: [] });
+    return tree.get(dir);
+  }
+
+  function normalizePath(input) {
+    let p = (input || "").trim();
+    if (p === "") return "/";
+    // Allow either "/A/B" or "A/B"
+    if (!p.startsWith("/")) p = "/" + p;
+    // Collapse multiple slashes
+    p = p.replace(/\/+/g, "/");
+    // Remove trailing slash except root
+    if (p.length > 1 && p.endsWith("/")) p = p.slice(0, -1);
+
+    // Reject traversal segments
+    const parts = p.split("/").filter(Boolean);
+    for (const part of parts) {
+      if (part === "." || part === "..") return "/";
+    }
+    return "/" + parts.join("/");
+  }
+
+  function toInternal(dirPath) {
+    const p = normalizePath(dirPath);
+    return (p === "/") ? "" : p.slice(1);
+  }
+
+  function fromInternal(dirInternal) {
+    return dirInternal === "" ? "/" : "/" + dirInternal;
+  }
+
+  function splitDirAndName(relPath) {
+    // relPath like "A/B/file.txt"
+    const idx = relPath.lastIndexOf("/");
+    if (idx === -1) return { dir: "", name: relPath };
+    return { dir: relPath.slice(0, idx), name: relPath.slice(idx + 1) };
+  }
+
+  function humanBytes(n) {
+    const num = Number(n || 0);
+    const units = ["B","KB","MB","GB","TB","PB"];
+    let x = num, i = 0;
+    while (x >= 1024 && i < units.length - 1) { x /= 1024; i++; }
+    return (i === 0) ? `${x} ${units[i]}` : `${x.toFixed(1)} ${units[i]}`;
+  }
+
+  function renderCrumbs(internalDir) {
+    elCrumbs.innerHTML = "";
+
+    const mk = (label, targetInternal) => {
+      const b = document.createElement("button");
+      b.className = "crumbBtn";
+      b.textContent = label;
+      b.onclick = () => setPath(fromInternal(targetInternal));
+      return b;
+    };
+
+    // Root
+    elCrumbs.appendChild(mk("/", ""));
+
+    if (internalDir === "") return;
+
+    const parts = internalDir.split("/");
+    let acc = "";
+    for (const part of parts) {
+      acc = acc ? (acc + "/" + part) : part;
+      elCrumbs.appendChild(document.createTextNode(" / "));
+      elCrumbs.appendChild(mk(part, acc));
+    }
+  }
+
+	function renderDir(dirInternal) {
+	  const node = ensureNode(dirInternal);
+	  const dirs = Array.from(node.dirs).sort((a,b)=>a.localeCompare(b));
+	  const files = node.files.slice().sort((a,b)=>a.path.localeCompare(b.path));
+
+	  elViewport.innerHTML = "";
+	  renderCrumbs(dirInternal);
+
+	  const wrap = document.createElement("div");
+	  wrap.className = "grid";
+
+	  // Parent directory entry (if not root)
+	  if (dirInternal !== "") {
+	    const parentInternal = dirInternal.includes("/") ? dirInternal.split("/").slice(0,-1).join("/") : "";
+	    const parentRow = document.createElement("div");
+	    parentRow.className = "row";
+	    parentRow.style.cursor = "pointer";
+
+	    const left = document.createElement("div");
+	    left.className = "left";
+	    left.innerHTML = `
+	      <div class="badge">⬆</div>
+	      <div class="nameCol">
+	        <div class="name">..</div>
+	        <div class="meta">Parent directory</div>
+	      </div>
+	    `;
+
+	    const actions = document.createElement("div");
+	    actions.className = "actions";
+	    const btn = document.createElement("button");
+	    btn.textContent = "Up";
+	    btn.onclick = (ev) => {
+	      ev.stopPropagation();
+	      setPath(fromInternal(parentInternal));
+	    };
+	    actions.appendChild(btn);
+
+	    parentRow.onclick = (ev) => {
+	      if (ev.target && ev.target.tagName === "BUTTON") return;
+	      setPath(fromInternal(parentInternal));
+	    };
+
+	    parentRow.appendChild(left);
+	    parentRow.appendChild(actions);
+	    wrap.appendChild(parentRow);
+	  }
+
+	  // Folders
+	  for (const d of dirs) {
+	    const fullInternal = dirInternal ? (dirInternal + "/" + d) : d;
+	    const row = document.createElement("div");
+	    row.className = "row";
+	    row.style.cursor = "pointer";
+
+	    const left = document.createElement("div");
+	    left.className = "left";
+	    left.innerHTML = `
+	      <div class="badge">📁</div>
+	      <div class="nameCol">
+	        <div class="name">${escapeHtml(d)}</div>
+	        <div class="meta">Folder</div>
+	      </div>
+	    `;
+
+	    const actions = document.createElement("div");
+	    actions.className = "actions";
+	    const btn = document.createElement("button");
+	    btn.textContent = "Open";
+	    btn.onclick = (ev) => {
+	      ev.stopPropagation();
+	      setPath(fromInternal(fullInternal));
+	    };
+	    actions.appendChild(btn);
+
+	    row.onclick = (ev) => {
+	      if (ev.target && ev.target.tagName === "BUTTON") return;
+	      setPath(fromInternal(fullInternal));
+	    };
+
+	    row.appendChild(left);
+	    row.appendChild(actions);
+	    wrap.appendChild(row);
+	  }
+
+	  // Files (row click downloads)
+	  for (const f of files) {
+	    const { name } = splitDirAndName(f.path);
+	    const row = document.createElement("div");
+	    row.className = "row";
+	    row.style.cursor = "pointer";
+
+	    const left = document.createElement("div");
+	    left.className = "left";
+	    left.innerHTML = `
+	      <div class="badge file">📄</div>
+	      <div class="nameCol">
+	        <div class="name">${escapeHtml(name)}</div>
+	        <div class="meta">${escapeHtml(f.type || "file")} • ${humanBytes(f.size || 0)}</div>
+	      </div>
+	    `;
+
+	    const actions = document.createElement("div");
+	    actions.className = "actions";
+
+	    const dl = document.createElement("button");
+	    dl.className = "primary";
+	    dl.textContent = "Download";
+	    dl.onclick = (ev) => {
+	      ev.stopPropagation();
+	      window.location.href = DOWNLOADER_URL + encodeURIComponent(f.uuid);
+	    };
+
+	    actions.appendChild(dl);
+
+	    row.onclick = (ev) => {
+	      if (ev.target && ev.target.tagName === "BUTTON") return;
+	      window.location.href = DOWNLOADER_URL + encodeURIComponent(f.uuid);
+	    };
+
+	    row.appendChild(left);
+	    row.appendChild(actions);
+	    wrap.appendChild(row);
+	  }
+
+	  if (dirs.length === 0 && files.length === 0) {
+	    const empty = document.createElement("div");
+	    empty.className = "empty";
+	    empty.textContent = "This folder is empty (or not present in manifest).";
+	    elViewport.appendChild(empty);
+	    return;
+	  }
+
+	  elViewport.appendChild(wrap);
+	}
+
+  function setPath(pathStr) {
+    const normalized = normalizePath(pathStr);
+    elPathInput.value = normalized;
+    elCwdPill.textContent = normalized;
+
+    const internal = toInternal(normalized);
+    renderDir(internal);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+    }[c]));
+  }
+
+  function buildTree(entries) {
+    // Ensure root exists
+    ensureNode("");
+
+    for (const e of entries) {
+      if (!e || typeof e !== "object") continue;
+      const rel = String(e.path || "");
+      if (!rel || rel.includes("\0")) continue;
+
+      const { dir, name } = splitDirAndName(rel);
+      ensureNode(dir);
+
+      // Add intermediate dirs to be navigable even if not explicitly listed
+      if (dir !== "") {
+        const parts = dir.split("/");
+        let acc = "";
+        for (const part of parts) {
+          const parent = acc;
+          acc = acc ? (acc + "/" + part) : part;
+          ensureNode(parent).dirs.add(part);
+          ensureNode(acc);
+        }
+      }
+
+      if (e.type === "directory") {
+        // directory entry points to its own path; make it appear under parent
+        const parent = dir;
+        if (name) ensureNode(parent).dirs.add(name);
+        ensureNode(rel); // the directory itself
+      } else {
+        // file entry
+        ensureNode(dir).files.push({
+          uuid: String(e.uuid || ""),
+          path: rel,
+          type: String(e.type || ""),
+          size: Number(e.size || 0)
+        });
+      }
+    }
+  }
+
+  async function init() {
+    try {
+      const res = await fetch(MANIFEST_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+
+      const entries = Array.isArray(json.entries) ? json.entries
+                   : Array.isArray(json) ? json
+                   : null;
+      if (!entries) throw new Error("Invalid manifest format");
+
+      manifestStats = json.stats || null;
+
+      buildTree(entries);
+
+      // Update pill
+      if (manifestStats) {
+        elStatsPill.textContent =
+          `${manifestStats.total_files ?? "?"} files • ${manifestStats.total_dirs ?? "?"} dirs • ${humanBytes(manifestStats.total_bytes ?? 0)}`;
+      } else {
+        elStatsPill.textContent = `${entries.length} entries`;
+      }
+
+      // Start at root
+      setPath("/");
+
+    } catch (err) {
+      elViewport.innerHTML = "";
+      const box = document.createElement("div");
+      box.className = "error";
+      box.textContent = `Failed to load manifest: ${err.message}`;
+      elViewport.appendChild(box);
+      elStatsPill.textContent = "Manifest error";
+    }
+  }
+
+  // Search bar behavior
+  elPathInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      setPath(elPathInput.value);
+      elPathInput.blur();
+    }
+  });
+  elPathInput.addEventListener("blur", () => {
+    // normalize on blur
+    setPath(elPathInput.value);
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>

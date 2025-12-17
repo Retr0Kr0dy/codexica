@@ -1,0 +1,3 @@
+# Codexica
+
+Simple database viewer.
