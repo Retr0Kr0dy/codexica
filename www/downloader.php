@@ -15,7 +15,25 @@ $MANIFEST_PATH = __DIR__ . '/manifest.json'; // served as /manifest.json, but we
 // ====================
 
 // Basic hardening
+header_remove('X-Powered-By');
+
 header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: no-referrer');
+header('Permissions-Policy: camera=(), microphone=(), geolocation=(), usb=(), payment=()');
+
+// Clickjacking protection (modern way is CSP frame-ancestors; keep XFO for legacy)
+header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+// Optional legacy:
+header('X-Frame-Options: DENY');
+
+// Cross-origin leakage control (tune if you intentionally allow cross-origin downloads)
+header('Cross-Origin-Resource-Policy: same-origin');
+header('Cross-Origin-Opener-Policy: same-origin');
+
+// If and only if you serve over HTTPS:
+if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
+}
 
 function fail(int $code, string $msg = ''): void {
     http_response_code($code);
