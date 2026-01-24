@@ -364,7 +364,9 @@
 
 <script>
 (() => {
-  const MANIFEST_URL = "/manifest.json";
+    // Manifest is generated server-side according to the authenticated user
+  // (Apache BasicAuth -> PHP uses REMOTE_USER to filter entries).
+  const MANIFEST_URL = "/manifest.php";
   const DOWNLOADER_URL = "/downloader.php?q=";
 
 	const BRAND = {
