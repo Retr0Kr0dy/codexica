@@ -316,6 +316,33 @@
       background-clip: padding-box;
     }
     .viewport::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.18); background-clip: padding-box; }
+    
+    .breadcrumb {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between; /* Pushes content to edges */
+      gap: 12px;
+      background: rgba(15,22,34,.40);
+    }
+
+    .breadcrumb-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .crumbs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
   </style>
 </head>
 
@@ -341,24 +368,26 @@
           <span class="icon">📁</span>
           <input id="pathInput" type="text" placeholder="/" value="/" autocomplete="off" spellcheck="false" />
         </div>
-        <div class="pill" id="cwdPill">/</div>
-      </div>
+</div>
     </div>
 
     <div class="viewportWrap">
       <div class="breadcrumb">
-        <span>Path:</span>
-        <div class="crumbs" id="crumbs"></div>
+        <div class="breadcrumb-left">
+          <span>Path:</span>
+          <div class="crumbs" id="crumbs"></div>
+        </div>
+        <button class="crumbBtn copyBtn" id="copyPathBtn" type="button" title="Copy current path">Copy</button>
       </div>
-
+    
       <div class="viewport" id="viewport">
         <div class="loading">Loading manifest…</div>
       </div>
     </div>
 
     <div class="hint">
-<span class="footerPill">Powered with ❤️ by codexica</span>
-    </div>
+<span class="footerPill">Powered with ❤️ by <a href="https://github.com/Retr0Kr0dy/codexica">codexica</a></span>
+	</div>
   </section>
 </main>
 
@@ -378,6 +407,7 @@
   const elViewport = document.getElementById("viewport");
   const elPathInput = document.getElementById("pathInput");
   const elCwdPill = document.getElementById("cwdPill");
+  const elCopyPathBtn = document.getElementById("copyPathBtn");
   const elStatsPill = document.getElementById("statsPill");
   const elCrumbs = document.getElementById("crumbs");
 
@@ -608,10 +638,39 @@
   function setPath(pathStr) {
     const normalized = normalizePath(pathStr);
     elPathInput.value = normalized;
-    elCwdPill.textContent = normalized;
+    if (elCwdPill) elCwdPill.textContent = normalized;
 
     const internal = toInternal(normalized);
     renderDir(internal);
+  }
+
+  function copyTextToClipboard(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+      }
+    } catch (_) {}
+    // Fallback
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (_) {}
+    document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+
+  if (elCopyPathBtn) {
+    elCopyPathBtn.addEventListener("click", async () => {
+      const p = normalizePath(elPathInput.value || "/");
+      await copyTextToClipboard(p);
+      const old = elCopyPathBtn.textContent;
+      elCopyPathBtn.textContent = "Copied";
+      setTimeout(() => { elCopyPathBtn.textContent = old; }, 900);
+    });
   }
 
   function escapeHtml(s) {
