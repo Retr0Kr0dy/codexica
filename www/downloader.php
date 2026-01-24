@@ -10,8 +10,8 @@ declare(strict_types=1);
  */
 
 // ====== CONFIG ======
-$DATA_ROOT = '/srv/data';                 // private dataset root (NOT exposed)
-$MANIFEST_PATH = __DIR__ . '/manifest.json'; // served as /manifest.json, but we read locally
+$DATA_ROOT = '/srv/data';
+$ACL_PATH  = '/etc/codexica/acl.json';
 // ====================
 
 // Basic hardening
@@ -45,6 +45,18 @@ function fail(int $code, string $msg = ''): void {
     exit;
 }
 
+function read_json_file(string $path): array {
+    if (!is_file($path) || !is_readable($path)) {
+        return [];
+    }
+    $raw = file_get_contents($path);
+    if ($raw === false) {
+        return [];
+    }
+    $j = json_decode($raw, true);
+    return is_array($j) ? $j : [];
+}
+
 $q = $_GET['q'] ?? '';
 $q = trim($q);
 
@@ -53,36 +65,50 @@ if (!preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[
     fail(400, "Bad request\n");
 }
 
-if (!is_file($MANIFEST_PATH) || !is_readable($MANIFEST_PATH)) {
+$user = (string)($_SERVER['REMOTE_USER'] ?? '');
+if ($user === '') {
+    // If Apache auth is properly configured, this should never happen.
+    fail(401, "Unauthorized\n");
+}
+
+$acl = read_json_file($ACL_PATH);
+if ($acl === []) {
     fail(500, "Server error\n");
 }
 
-$raw = file_get_contents($MANIFEST_PATH);
-if ($raw === false) {
+$manifestMap = $acl['manifests'] ?? null; // name => absolute path
+if (!is_array($manifestMap) || $manifestMap === []) {
     fail(500, "Server error\n");
 }
 
-$manifest = json_decode($raw, true);
-if (!is_array($manifest)) {
-    fail(500, "Server error\n");
+$allowedNames = $acl['users'][$user] ?? ($acl['default'] ?? []);
+if (!is_array($allowedNames)) {
+    $allowedNames = [];
 }
 
-// Manifest can be either { entries: [...] } or [ ... ]
-$entries = $manifest['entries'] ?? $manifest;
-if (!is_array($entries)) {
-    fail(500, "Server error\n");
-}
-
-// Find entry by UUID (O(n)). For big manifests, consider a prebuilt UUID->entry map/cache.
+// Find entry by UUID, but ONLY inside manifests allowed for this user.
 $entry = null;
-foreach ($entries as $e) {
-    if (is_array($e) && ($e['uuid'] ?? null) === $q) {
-        $entry = $e;
-        break;
+foreach ($allowedNames as $name) {
+    if (!is_string($name) || $name === '') continue;
+    $mp = $manifestMap[$name] ?? null;
+    if (!is_string($mp) || $mp === '') continue;
+
+    $manifest = read_json_file($mp);
+    if ($manifest === []) continue;
+
+    $entries = $manifest['entries'] ?? $manifest;
+    if (!is_array($entries)) continue;
+
+    foreach ($entries as $e) {
+        if (is_array($e) && ($e['uuid'] ?? null) === $q) {
+            $entry = $e;
+            break 2;
+        }
     }
 }
 
 if ($entry === null) {
+    // 404 avoids leaking whether the UUID exists in another bucket.
     fail(404, "Not found\n");
 }
 

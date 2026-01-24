@@ -1,0 +1,22 @@
+{
+  "manifests": {
+    "public": "/srv/codexica/manifests/public.json",
+    "team": "/srv/codexica/manifests/team.json",
+    "full": "/srv/codexica/manifests/full.json"
+  },
+  "users": {
+    "user1": [
+      "public"
+    ],
+    "user2": [
+      "public",
+      "team"
+    ],
+    "admin": [
+      "full"
+    ]
+  },
+  "default": [
+    "public"
+  ]
+}
